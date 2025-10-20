@@ -2,38 +2,75 @@ using Unity.CodeEditor;
 using System.Collections.Generic;
 using System.Xml.XPath;
 using System.Text;
+using System;
+using System.Diagnostics;
 using NiceIO;
 
 namespace UnityZed
 {
     public class ZedDiscovery
     {
+        private static bool k_IsWindows => UnityEngine.Application.platform == UnityEngine.RuntimePlatform.WindowsEditor;
+
         public CodeEditor.Installation[] GetInstallations()
         {
             var results = new List<CodeEditor.Installation>();
 
-            var candidates = new (NPath path, TryGetVersion tryGetVersion)[] {
+            var candidates = new List<(NPath path, TryGetVersion tryGetVersion)>();
 
+            // [Windows]
+            if (k_IsWindows)
+            {
+                // [Windows] (Program Files)
+                candidates.Add(("C:\\Program Files\\Zed\\zed.exe", null));
+                candidates.Add(("C:\\Program Files (x86)\\Zed\\zed.exe", null));
+
+                // [Windows] (User local installation - Standard installer location)
+                var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+                candidates.Add((new NPath(localAppData).Combine("Programs", "Zed", "Zed.exe"), null));
+                candidates.Add((new NPath(localAppData).Combine("Zed", "zed.exe"), null));
+
+                // [Windows] (User AppData)
+                var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+                candidates.Add((new NPath(appData).Combine("Zed", "zed.exe"), null));
+
+                // [Windows] (Scoop installation)
+                var scoopPath = NPath.HomeDirectory.Combine("scoop", "apps", "zed", "current", "zed.exe");
+                candidates.Add((scoopPath, null));
+
+                // [Windows] (Chocolatey installation)
+                candidates.Add(("C:\\ProgramData\\chocolatey\\lib\\zed\\tools\\zed.exe", null));
+
+                // [Windows] (winget installation)
+                candidates.Add((NPath.HomeDirectory.Combine("AppData", "Local", "Microsoft", "WinGet", "Packages", "zed.Zed", "zed.exe"), null));
+
+                // [Windows] (Check for Zed in PATH)
+                candidates.Add(("zed.exe", TryGetVersionFromWindowsExe));
+            }
+            else
+            {
                 // [MacOS]
-                ("/Applications/Zed.app/Contents/MacOS/cli", TryGetVersionFromPlist),
-                ("/usr/local/bin/zed", null),
+                candidates.Add(("/Applications/Zed.app/Contents/MacOS/cli", TryGetVersionFromPlist));
+                candidates.Add(("/usr/local/bin/zed", null));
 
                 // [Linux] (Flatpak)
-                ("/var/lib/flatpak/app/dev.zed.Zed/current/active/files/bin/zed", null),
+                candidates.Add(("/var/lib/flatpak/app/dev.zed.Zed/current/active/files/bin/zed", null));
 
-                // [Linux] (Repo) 
-                ("/usr/bin/zeditor", null),
+                // [Linux] (Repo)
+                candidates.Add(("/usr/bin/zeditor", null));
 
                 // [Linux] (NixOS)
-                ("/run/current-system/sw/bin/zeditor", null),
+                candidates.Add(("/run/current-system/sw/bin/zeditor", null));
+
                 // [Linux] (NixOS HomeManager from Zed Flake)
-                ("/etc/profiles/per-user/linx/bin/zed", null),
+                candidates.Add(($"/etc/profiles/per-user/{Environment.UserName}/bin/zed", null));
+
                 // [Linux] (NixOS HomeManager from NixPkgs)
-                ("/etc/profiles/per-user/linx/bin/zeditor", null),
+                candidates.Add(($"/etc/profiles/per-user/{Environment.UserName}/bin/zeditor", null));
 
                 // [Linux] (Official Website)
-                (NPath.HomeDirectory.Combine(".local/bin/zed"), null),
-            };
+                candidates.Add((NPath.HomeDirectory.Combine(".local/bin/zed"), null));
+            }
 
             foreach (var candidate in candidates)
             {
@@ -101,6 +138,31 @@ namespace UnityZed
 
             version = xNavigator.Value;
             return true;
+        }
+
+        private static bool TryGetVersionFromWindowsExe(NPath path, out string version)
+        {
+            version = null;
+
+            if (!k_IsWindows || !path.FileExists())
+                return false;
+
+            try
+            {
+                // Try to get version from the executable file
+                var versionInfo = System.Diagnostics.FileVersionInfo.GetVersionInfo(path.ToString());
+                if (!string.IsNullOrEmpty(versionInfo.FileVersion))
+                {
+                    version = versionInfo.FileVersion;
+                    return true;
+                }
+            }
+            catch
+            {
+                // If version detection fails, just return false
+            }
+
+            return false;
         }
     }
 }

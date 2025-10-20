@@ -20,7 +20,7 @@ namespace UnityZed
 
         public bool OpenProject(string filePath = "", int line = -1, int column = -1)
         {
-            sLogger.Log("OpenProject");
+            sLogger.Log($"OpenProject - ExecPath: {m_ExecPath}, FilePath: {filePath}, Line: {line}, Column: {column}");
 
             // always add project path
             var args = new StringBuilder($"\"{m_ProjectPath}\"");
@@ -44,7 +44,16 @@ namespace UnityZed
                 }
             }
 
-            return CodeEditor.OSOpenFile(m_ExecPath.ToString(), args.ToString());
+            try
+            {
+                sLogger.Log($"Executing: {m_ExecPath} {args}");
+                return CodeEditor.OSOpenFile(m_ExecPath.ToString(), args.ToString());
+            }
+            catch (System.Exception ex)
+            {
+                sLogger.Log($"Failed to open Zed: {ex.Message}");
+                return false;
+            }
         }
     }
 }
