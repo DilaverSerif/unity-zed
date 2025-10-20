@@ -62,7 +62,41 @@ The package now supports Windows with automatic detection of Zed installations i
 4. Unity will automatically detect your Zed installation
 5. Double-click any C# script to open it in Zed
 
-## Troubleshooting
+## AI Features and IntelliSense Support
+
+This package now includes enhanced support for Zed's AI features and C# IntelliSense:
+
+### Automatic LSP Configuration
+The package automatically creates a `.zed/settings.json` file in your Unity project with:
+- **C# Language Server**: OmniSharp configuration for Unity C# projects
+- **IntelliSense**: Auto-completion, code navigation, and refactoring
+- **Real-time Diagnostics**: Error detection and suggestions
+- **Code Formatting**: Automatic C# code formatting
+
+### Manual OmniSharp Installation
+If AI features don't work automatically, install OmniSharp:
+
+```bash
+# Option 1: Install as .NET tool
+dotnet tool install -g omnisharp
+
+# Option 2: Use Visual Studio's OmniSharp
+# Located in: Visual Studio 2022\MSBuild\Current\Bin\Roslyn\omnisharp.exe
+```
+
+### Enable AI Features in Zed
+1. Open your Unity project in Zed
+2. Press `Cmd/Ctrl + Shift + P` → "Settings"
+3. Ensure Language Server Protocol is enabled for C#
+4. Restart Zed after configuration changes
+
+### Troubleshooting AI Features
+
+**No IntelliSense or AI suggestions:**
+- Check that OmniSharp is installed and accessible
+- Verify `.zed/settings.json` exists in your Unity project
+- Restart both Unity and Zed after making changes
+- Check Zed's developer console for LSP connection errors
 
 **Zed not detected on Windows:**
 - Make sure Zed is installed in one of the supported locations
@@ -72,3 +106,8 @@ The package now supports Windows with automatic detection of Zed installations i
 **File opening issues:**
 - Ensure your Unity project has solution/project file generation enabled
 - Check Unity Console for any error messages
+
+**LSP connection issues:**
+- Verify OmniSharp path in `.zed/settings.json`
+- Check that your project has `.sln` and `.csproj` files
+- Ensure Unity's External Script Editor is set to Zed Editor

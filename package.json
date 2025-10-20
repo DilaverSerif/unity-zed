@@ -2,7 +2,7 @@
   "name": "com.maligan.unity-zed",
   "displayName": "Zed Editor",
   "description": "Zed Editor integration for Unity (Windows, macOS, Linux)",
-  "version": "0.2.4-preview",
+  "version": "0.2.5-preview",
   "dependencies": {
     "com.unity.ide.visualstudio": "2.0.20"
   }
